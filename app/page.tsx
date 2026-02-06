@@ -166,6 +166,14 @@ export default function Home() {
   const [contactsData, setContactsData] = useState<Contact[]>([])
   const [uploadLoading, setUploadLoading] = useState(false)
   const [dragActive, setDragActive] = useState(false)
+  const [manualContactForm, setManualContactForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    company: '',
+    tags: ''
+  })
+  const [addingContact, setAddingContact] = useState(false)
 
   // Broadcasts State
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
@@ -277,6 +285,78 @@ export default function Home() {
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv'))) {
       handleFileUpload(file)
     }
+  }
+
+  const handleAddManualContact = async () => {
+    if (!manualContactForm.name || !manualContactForm.phone) return
+
+    setAddingContact(true)
+
+    // Create contact object with validation
+    const message = `Add a new contact with these details: Name: ${manualContactForm.name}, Phone: ${manualContactForm.phone}, Email: ${manualContactForm.email || 'N/A'}, Company: ${manualContactForm.company || 'N/A'}. Validate the phone number and email format.`
+
+    const result = await callAIAgent(message, AGENT_IDS.CONTACT_PROCESSOR)
+
+    if (result.success && result.response.status === 'success') {
+      const processedData = result.response.result as ContactList
+
+      // Add to existing contacts or create new list
+      if (selectedContactList && contactLists.length > 0) {
+        // Add to existing list
+        const updatedLists = contactLists.map(list => {
+          if (list.list_id === selectedContactList) {
+            const newContact: Contact = processedData.contacts[0] || {
+              name: manualContactForm.name,
+              phone: manualContactForm.phone,
+              email: manualContactForm.email,
+              company: manualContactForm.company,
+              status: 'valid',
+              errors: [],
+              tags: manualContactForm.tags ? manualContactForm.tags.split(',').map(t => t.trim()) : []
+            }
+            return {
+              ...list,
+              contacts: [...list.contacts, newContact],
+              valid_contacts: list.valid_contacts + 1,
+              total_rows: list.total_rows + 1
+            }
+          }
+          return list
+        })
+        setContactLists(updatedLists)
+
+        // Update displayed contacts if viewing current list
+        const currentList = updatedLists.find(l => l.list_id === selectedContactList)
+        if (currentList) {
+          setContactsData(currentList.contacts)
+        }
+      } else {
+        // Create new contact directly
+        const newContact: Contact = {
+          name: manualContactForm.name,
+          phone: manualContactForm.phone,
+          email: manualContactForm.email,
+          company: manualContactForm.company,
+          status: 'valid',
+          errors: [],
+          tags: manualContactForm.tags ? manualContactForm.tags.split(',').map(t => t.trim()) : []
+        }
+        setContactsData(prev => [...prev, newContact])
+      }
+
+      setStats(prev => ({ ...prev, totalContacts: prev.totalContacts + 1 }))
+
+      // Reset form
+      setManualContactForm({
+        name: '',
+        phone: '',
+        email: '',
+        company: '',
+        tags: ''
+      })
+    }
+
+    setAddingContact(false)
   }
 
   // Broadcast Functions
@@ -701,10 +781,150 @@ export default function Home() {
 
           {/* Contacts Tab */}
           <TabsContent value="contacts" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Manual Contact Addition */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FaUser />
+                    Add Contact Manually
+                  </CardTitle>
+                  <CardDescription>Enter contact details individually</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-name">Name *</Label>
+                    <Input
+                      id="contact-name"
+                      placeholder="John Doe"
+                      value={manualContactForm.name}
+                      onChange={(e) => setManualContactForm(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-phone">Phone Number *</Label>
+                    <Input
+                      id="contact-phone"
+                      placeholder="+1234567890"
+                      value={manualContactForm.phone}
+                      onChange={(e) => setManualContactForm(prev => ({ ...prev, phone: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-email">Email</Label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      placeholder="john@example.com"
+                      value={manualContactForm.email}
+                      onChange={(e) => setManualContactForm(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-company">Company</Label>
+                    <Input
+                      id="contact-company"
+                      placeholder="Acme Inc."
+                      value={manualContactForm.company}
+                      onChange={(e) => setManualContactForm(prev => ({ ...prev, company: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="contact-tags">Tags (comma-separated)</Label>
+                    <Input
+                      id="contact-tags"
+                      placeholder="lead, premium, q1"
+                      value={manualContactForm.tags}
+                      onChange={(e) => setManualContactForm(prev => ({ ...prev, tags: e.target.value }))}
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleAddManualContact}
+                    disabled={addingContact || !manualContactForm.name || !manualContactForm.phone}
+                    className="w-full bg-[#25D366] hover:bg-[#1fb855]"
+                  >
+                    {addingContact ? (
+                      <>
+                        <FaSpinner className="mr-2 animate-spin" />
+                        Adding Contact...
+                      </>
+                    ) : (
+                      <>
+                        <FaPlus className="mr-2" />
+                        Add Contact
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Excel Upload */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FaUpload />
+                    Bulk Upload via Excel
+                  </CardTitle>
+                  <CardDescription>Upload .xlsx, .xls, or .csv files</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div
+                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                      dragActive ? 'border-[#075E54] bg-green-50' : 'border-gray-300'
+                    }`}
+                    onDragEnter={() => setDragActive(true)}
+                    onDragLeave={() => setDragActive(false)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={handleDrop}
+                  >
+                    <FaUpload className="mx-auto text-4xl text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Upload Excel File</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      Drag and drop your file here
+                    </p>
+                    <p className="text-xs text-gray-400 mb-4">Maximum file size: 10MB</p>
+                    <Input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      id="file-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFileUpload(file)
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={uploadLoading}
+                    >
+                      {uploadLoading ? (
+                        <>
+                          <FaSpinner className="mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <FaUpload className="mr-2" />
+                          Choose File
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Contact List Management */}
             <Card>
               <CardHeader>
-                <CardTitle>Contact Management</CardTitle>
-                <CardDescription>Upload and manage your contact lists</CardDescription>
+                <CardTitle>Contact Lists</CardTitle>
+                <CardDescription>View and manage your contact lists</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* List Selector */}
@@ -722,53 +942,6 @@ export default function Home() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <Separator />
-
-                {/* Upload Zone */}
-                <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                    dragActive ? 'border-[#075E54] bg-green-50' : 'border-gray-300'
-                  }`}
-                  onDragEnter={() => setDragActive(true)}
-                  onDragLeave={() => setDragActive(false)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={handleDrop}
-                >
-                  <FaUpload className="mx-auto text-4xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Upload Excel File</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Drag and drop your .xlsx, .xls, or .csv file here
-                  </p>
-                  <p className="text-xs text-gray-400 mb-4">Maximum file size: 10MB</p>
-                  <Input
-                    type="file"
-                    accept=".xlsx,.xls,.csv"
-                    className="hidden"
-                    id="file-upload"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload(file)
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                    disabled={uploadLoading}
-                  >
-                    {uploadLoading ? (
-                      <>
-                        <FaSpinner className="mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <FaUpload className="mr-2" />
-                        Choose File
-                      </>
-                    )}
-                  </Button>
                 </div>
 
                 {/* Contact Table */}
