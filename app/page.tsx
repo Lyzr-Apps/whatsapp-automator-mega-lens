@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { callAIAgent, uploadFiles } from '@/lib/aiAgent'
+import { whatsappService, WhatsAppStatus } from '@/lib/whatsappService'
 import {
   FaWhatsapp,
   FaFileAlt,
@@ -36,7 +37,10 @@ import {
   FaBell,
   FaUser,
   FaCalendarAlt,
-  FaTimes
+  FaTimes,
+  FaQrcode,
+  FaLink,
+  FaPowerOff
 } from 'react-icons/fa'
 
 // Agent IDs
@@ -123,6 +127,19 @@ interface Campaign {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard')
 
+  // Poll WhatsApp status on mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      const status = await whatsappService.getStatus()
+      setWhatsappStatus(status)
+    }
+
+    checkStatus()
+    const interval = setInterval(checkStatus, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   // Dashboard State
   const [stats, setStats] = useState({
     totalTemplates: 12,
@@ -174,6 +191,15 @@ export default function Home() {
     tags: ''
   })
   const [addingContact, setAddingContact] = useState(false)
+
+  // WhatsApp Connection State
+  const [whatsappStatus, setWhatsappStatus] = useState<WhatsAppStatus>({
+    connected: false,
+    browser_active: false
+  })
+  const [whatsappLoading, setWhatsappLoading] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [showQRModal, setShowQRModal] = useState(false)
 
   // Broadcasts State
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([])
@@ -287,6 +313,43 @@ export default function Home() {
     }
   }
 
+  // WhatsApp Connection Functions
+  const handleStartWhatsApp = async () => {
+    setWhatsappLoading(true)
+
+    const result = await whatsappService.startWhatsApp(false)
+
+    if (result.success) {
+      setShowQRModal(true)
+      // Poll for QR code
+      const pollQR = setInterval(async () => {
+        const qrResult = await whatsappService.getQRCode()
+        if (qrResult.qr_code) {
+          setQrCode(qrResult.qr_code)
+        }
+
+        // Check if connected
+        const status = await whatsappService.getStatus()
+        if (status.connected) {
+          setShowQRModal(false)
+          clearInterval(pollQR)
+        }
+      }, 2000)
+
+      // Stop polling after 60 seconds
+      setTimeout(() => clearInterval(pollQR), 60000)
+    }
+
+    setWhatsappLoading(false)
+  }
+
+  const handleStopWhatsApp = async () => {
+    setWhatsappLoading(true)
+    await whatsappService.stopWhatsApp()
+    setWhatsappStatus({ connected: false, browser_active: false })
+    setWhatsappLoading(false)
+  }
+
   const handleAddManualContact = async () => {
     if (!manualContactForm.name || !manualContactForm.phone) return
 
@@ -381,38 +444,70 @@ export default function Home() {
   const handleHammerSend = async () => {
     if (!broadcastForm.templateId || broadcastForm.contactLists.length === 0) return
 
+    // Check WhatsApp connection
+    if (!whatsappStatus.connected) {
+      alert('Please connect WhatsApp Web first!')
+      return
+    }
+
     setBroadcastLoading(true)
 
     const selectedTemplate = templates.find(t => t.template_id === broadcastForm.templateId)
-    const contactListNames = broadcastForm.contactLists.join(', ')
     const totalContacts = contactLists
       .filter(cl => broadcastForm.contactLists.includes(cl.list_id))
       .reduce((sum, cl) => sum + cl.valid_contacts, 0)
 
-    const timeSlotsText = broadcastForm.timeSlots.map(ts => {
-      const date = new Date(ts)
-      return date.toLocaleString()
-    }).join(', ')
+    // Get all contacts from selected lists
+    const allContacts = contactLists
+      .filter(cl => broadcastForm.contactLists.includes(cl.list_id))
+      .flatMap(cl => cl.contacts)
 
-    const message = `Schedule a ${broadcastForm.hammerEnabled ? 'Hammer' : 'regular'} broadcast using template '${selectedTemplate?.template_name}' to contact lists [${contactListNames}] (${totalContacts} contacts) at these times: ${timeSlotsText}. Frequency: ${broadcastForm.frequency}`
+    try {
+      let broadcastResult
 
-    const result = await callAIAgent(message, AGENT_IDS.BROADCAST_SCHEDULER)
-
-    if (result.success) {
-      const broadcastResult = result.response.result as Broadcast
-      const newBroadcast: Broadcast = {
-        ...broadcastResult,
-        broadcast_id: `broadcast_${Date.now()}`,
-        status: broadcastResult.validation_status === 'valid' ? 'scheduled' : 'failed',
-        created_at: new Date().toISOString()
+      if (broadcastForm.hammerEnabled && broadcastForm.timeSlots.length > 0) {
+        // Execute Hammer broadcast via WhatsApp service
+        broadcastResult = await whatsappService.executeHammer(
+          broadcastForm.timeSlots,
+          allContacts,
+          selectedTemplate?.template_content || '',
+          5 // 5 second delay between messages
+        )
+      } else {
+        // Execute regular broadcast via WhatsApp service
+        broadcastResult = await whatsappService.executeBroadcast(
+          allContacts,
+          selectedTemplate?.template_content || '',
+          5
+        )
       }
 
-      setBroadcasts(prev => [newBroadcast, ...prev])
+      if (broadcastResult.success) {
+        const newBroadcast: Broadcast = {
+          broadcast_id: `broadcast_${Date.now()}`,
+          broadcast_name: `${selectedTemplate?.template_name} - ${new Date().toLocaleString()}`,
+          template_id: broadcastForm.templateId,
+          list_id: broadcastForm.contactLists.join(','),
+          schedule_type: broadcastForm.hammerEnabled ? 'hammer' : 'one-time',
+          time_slots: broadcastForm.timeSlots,
+          total_contacts: totalContacts,
+          total_messages: broadcastForm.hammerEnabled
+            ? totalContacts * broadcastForm.timeSlots.length
+            : totalContacts,
+          estimated_duration: '~10 minutes',
+          personalization_preview: [],
+          validation_status: 'valid',
+          validation_errors: [],
+          queue_status: 'completed',
+          status: 'completed',
+          created_at: new Date().toISOString()
+        }
 
-      if (broadcastResult.validation_status === 'valid') {
+        setBroadcasts(prev => [newBroadcast, ...prev])
         setStats(prev => ({
           ...prev,
-          scheduledBroadcasts: prev.scheduledBroadcasts + 1
+          scheduledBroadcasts: prev.scheduledBroadcasts + 1,
+          messagesSentToday: prev.messagesSentToday + newBroadcast.total_messages
         }))
 
         // Reset form
@@ -424,6 +519,8 @@ export default function Home() {
           frequency: 'one-time'
         })
       }
+    } catch (error) {
+      console.error('Broadcast failed:', error)
     }
 
     setBroadcastLoading(false)
@@ -443,6 +540,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FaQrcode className="text-[#25D366]" />
+                Connect WhatsApp Web
+              </CardTitle>
+              <CardDescription>
+                Scan the QR code with your phone to connect
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-center p-4 bg-gray-50 rounded-lg">
+                {qrCode ? (
+                  <img
+                    src={`data:image/png;base64,${qrCode}`}
+                    alt="WhatsApp QR Code"
+                    className="w-64 h-64"
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex items-center justify-center">
+                    <FaSpinner className="text-4xl text-gray-400 animate-spin" />
+                  </div>
+                )}
+              </div>
+
+              <Alert>
+                <FaWhatsapp className="h-4 w-4" />
+                <AlertDescription>
+                  Open WhatsApp on your phone, go to Settings → Linked Devices → Link a Device, and scan this QR code
+                </AlertDescription>
+              </Alert>
+
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowQRModal(false)}
+              >
+                Cancel
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-[#075E54] text-white shadow-lg">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -454,6 +598,50 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {/* WhatsApp Connection Status */}
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-lg">
+              <div className="flex items-center gap-2">
+                {whatsappStatus.connected ? (
+                  <>
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                    <span className="text-sm font-medium">WhatsApp Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-red-400 rounded-full" />
+                    <span className="text-sm font-medium">Disconnected</span>
+                  </>
+                )}
+              </div>
+              {whatsappStatus.connected ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white hover:bg-red-600"
+                  onClick={handleStopWhatsApp}
+                  disabled={whatsappLoading}
+                >
+                  <FaPowerOff className="mr-2" />
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-white hover:bg-green-600"
+                  onClick={handleStartWhatsApp}
+                  disabled={whatsappLoading}
+                >
+                  {whatsappLoading ? (
+                    <FaSpinner className="mr-2 animate-spin" />
+                  ) : (
+                    <FaLink className="mr-2" />
+                  )}
+                  Connect
+                </Button>
+              )}
+            </div>
+
             <Button variant="ghost" size="icon" className="text-white hover:bg-[#064e45]">
               <FaBell className="text-xl" />
             </Button>
