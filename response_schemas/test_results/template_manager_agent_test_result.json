@@ -1,0 +1,30 @@
+{
+  "agent_name": "Template Manager Agent",
+  "agent_id": "6985a60a301c62c7ca2c7df8",
+  "test_message": "Create a template for a promotional message: 'Hi {{name}}, we have a special offer for {{company}}! Get 20% off on all products this week. Reply YES to subscribe.'",
+  "expected_purpose": "Creates, validates, and manages message templates with variable placeholders",
+  "timestamp": "2026-02-06T08:29:48.819670",
+  "is_valid_json": true,
+  "validation_errors": [],
+  "actual_response": {
+    "status": "success",
+    "result": {
+      "template_id": "promo_offer_001",
+      "template_name": "Special Offer Promotion",
+      "template_content": "Hi {{name}}, we have a special offer for {{company}}! Get 20% off on all products this week. Reply YES to subscribe.",
+      "variables": [
+        "name",
+        "company"
+      ],
+      "category": "promotional",
+      "character_count": 126,
+      "validation_status": "valid",
+      "validation_errors": []
+    },
+    "metadata": {
+      "agent_name": "Template Manager Agent",
+      "timestamp": "2024-06-13T22:27:34Z"
+    }
+  },
+  "raw_response": "{\n  \"status\": \"success\",\n  \"result\": {\n    \"template_id\": \"promo_offer_001\",\n    \"template_name\": \"Special Offer Promotion\",\n    \"template_content\": \"Hi {{name}}, we have a special offer for {{company}}! Get 20% off on all products this week. Reply YES to subscribe.\",\n    \"variables\": [\"name\", \"company\"],\n    \"category\": \"promotional\",\n    \"character_count\": 126,\n    \"validation_status\": \"valid\",\n    \"validation_errors\": []\n  },\n  \"metadata\": {\n    \"agent_name\": \"Template Manager Agent\",\n    \"timestamp\": \"2024-06-13T22:27:34Z\"\n  }\n}"
+}

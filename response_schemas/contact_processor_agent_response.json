@@ -1,0 +1,144 @@
+{
+  "agent_name": "Contact Processor Agent",
+  "agent_id": "6985a61fe2c0086a4fc43bf2",
+  "agent_purpose": "contact_processor",
+  "description": "Parses Excel files, validates phone numbers, detects duplicates, and organizes contacts into lists",
+  "response_schema": {
+    "status": "string",
+    "result": {
+      "list_id": "string",
+      "list_name": "string",
+      "total_rows": "number",
+      "valid_contacts": "number",
+      "invalid_contacts": "number",
+      "duplicate_contacts": "number",
+      "contacts": [
+        {
+          "name": "string",
+          "phone": "string",
+          "email": "string",
+          "company": "string",
+          "status": "string",
+          "errors": [
+            "any"
+          ]
+        }
+      ],
+      "processing_summary": {
+        "success_rate": "string",
+        "total_fields_extracted": "number",
+        "validation_errors": [
+          "string"
+        ]
+      }
+    },
+    "metadata": {
+      "agent_name": "string",
+      "timestamp": "string"
+    }
+  },
+  "example_response": {
+    "status": "success",
+    "result": {
+      "list_id": "list_001",
+      "list_name": "Processed Contacts",
+      "total_rows": 3,
+      "valid_contacts": 2,
+      "invalid_contacts": 0,
+      "duplicate_contacts": 1,
+      "contacts": [
+        {
+          "name": "John Doe",
+          "phone": "+1234567890",
+          "email": "john@example.com",
+          "company": "",
+          "status": "valid",
+          "errors": []
+        },
+        {
+          "name": "Jane Smith",
+          "phone": "+1987654321",
+          "email": "jane@example.com",
+          "company": "",
+          "status": "valid",
+          "errors": []
+        },
+        {
+          "name": "John Doe",
+          "phone": "+1234567890",
+          "email": "john.duplicate@example.com",
+          "company": "",
+          "status": "duplicate",
+          "errors": [
+            "Duplicate phone number"
+          ]
+        }
+      ],
+      "processing_summary": {
+        "success_rate": "66.67%",
+        "total_fields_extracted": 9,
+        "validation_errors": [
+          "Duplicate phone number detected for +1234567890"
+        ]
+      }
+    },
+    "metadata": {
+      "agent_name": "Contact Processor Agent",
+      "timestamp": "2024-06-21T15:32:42Z"
+    }
+  },
+  "is_actual_tested": true,
+  "test_timestamp": "2026-02-06T08:29:55.674695",
+  "test_message_used": "Hello, provide a sample response",
+  "actual_test_response": {
+    "status": "success",
+    "result": {
+      "list_id": "list_001",
+      "list_name": "Processed Contacts",
+      "total_rows": 3,
+      "valid_contacts": 2,
+      "invalid_contacts": 0,
+      "duplicate_contacts": 1,
+      "contacts": [
+        {
+          "name": "John Doe",
+          "phone": "+1234567890",
+          "email": "john@example.com",
+          "company": "",
+          "status": "valid",
+          "errors": []
+        },
+        {
+          "name": "Jane Smith",
+          "phone": "+1987654321",
+          "email": "jane@example.com",
+          "company": "",
+          "status": "valid",
+          "errors": []
+        },
+        {
+          "name": "John Doe",
+          "phone": "+1234567890",
+          "email": "john.duplicate@example.com",
+          "company": "",
+          "status": "duplicate",
+          "errors": [
+            "Duplicate phone number"
+          ]
+        }
+      ],
+      "processing_summary": {
+        "success_rate": "66.67%",
+        "total_fields_extracted": 9,
+        "validation_errors": [
+          "Duplicate phone number detected for +1234567890"
+        ]
+      }
+    },
+    "metadata": {
+      "agent_name": "Contact Processor Agent",
+      "timestamp": "2024-06-21T15:32:42Z"
+    }
+  },
+  "test_passed": true
+}

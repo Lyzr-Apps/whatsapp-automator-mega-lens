@@ -1,0 +1,71 @@
+{
+  "agent_name": "Template Manager Agent",
+  "agent_id": "6985a60a301c62c7ca2c7df8",
+  "agent_purpose": "template_manager",
+  "description": "Creates, validates, and manages WhatsApp message templates with variable placeholders",
+  "response_schema": {
+    "status": "string",
+    "result": {
+      "template_id": "string",
+      "template_name": "string",
+      "template_content": "string",
+      "variables": [
+        "string"
+      ],
+      "category": "string",
+      "character_count": "number",
+      "validation_status": "string",
+      "validation_errors": [
+        "any"
+      ]
+    },
+    "metadata": {
+      "agent_name": "string",
+      "timestamp": "string"
+    }
+  },
+  "example_response": {
+    "status": "success",
+    "result": {
+      "template_id": "promo_offer_001",
+      "template_name": "Special Offer Promotion",
+      "template_content": "Hi {{name}}, we have a special offer for {{company}}! Get 20% off on all products this week. Reply YES to subscribe.",
+      "variables": [
+        "name",
+        "company"
+      ],
+      "category": "promotional",
+      "character_count": 126,
+      "validation_status": "valid",
+      "validation_errors": []
+    },
+    "metadata": {
+      "agent_name": "Template Manager Agent",
+      "timestamp": "2024-06-13T22:27:34Z"
+    }
+  },
+  "is_actual_tested": true,
+  "test_timestamp": "2026-02-06T08:29:48.820185",
+  "test_message_used": "Hello, provide a sample response",
+  "actual_test_response": {
+    "status": "success",
+    "result": {
+      "template_id": "promo_offer_001",
+      "template_name": "Special Offer Promotion",
+      "template_content": "Hi {{name}}, we have a special offer for {{company}}! Get 20% off on all products this week. Reply YES to subscribe.",
+      "variables": [
+        "name",
+        "company"
+      ],
+      "category": "promotional",
+      "character_count": 126,
+      "validation_status": "valid",
+      "validation_errors": []
+    },
+    "metadata": {
+      "agent_name": "Template Manager Agent",
+      "timestamp": "2024-06-13T22:27:34Z"
+    }
+  },
+  "test_passed": true
+}

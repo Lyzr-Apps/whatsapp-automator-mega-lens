@@ -1,0 +1,88 @@
+{
+  "agent_name": "Broadcast Scheduler Agent",
+  "agent_id": "6985a638705117394b711964",
+  "agent_purpose": "broadcast_scheduler",
+  "description": "Configures multi-time broadcast schedules, validates time slots, maps templates to contacts, and queues messages for WhatsApp execution",
+  "response_schema": {
+    "status": "string",
+    "result": {
+      "broadcast_id": "null",
+      "broadcast_name": "string",
+      "template_id": "string",
+      "list_id": "string",
+      "schedule_type": "string",
+      "time_slots": [
+        "any"
+      ],
+      "total_contacts": "number",
+      "total_messages": "number",
+      "estimated_duration": "string",
+      "personalization_preview": [
+        "any"
+      ],
+      "validation_status": "string",
+      "validation_errors": [
+        "string"
+      ],
+      "queue_status": "string"
+    },
+    "metadata": {
+      "agent_name": "string",
+      "timestamp": "string"
+    }
+  },
+  "example_response": {
+    "status": "error",
+    "result": {
+      "broadcast_id": null,
+      "broadcast_name": "Hammer Broadcast - Promo Template to Q1 Leads",
+      "template_id": "Promo Template",
+      "list_id": "Q1 Leads",
+      "schedule_type": "hammer",
+      "time_slots": [],
+      "total_contacts": 500,
+      "total_messages": 0,
+      "estimated_duration": "0 minutes",
+      "personalization_preview": [],
+      "validation_status": "invalid",
+      "validation_errors": [
+        "Scheduled times must be provided in ISO 8601 or HH:MM format with timezone.",
+        "Times must be in the future; please specify the timezone (default is UTC) to ensure accurate scheduling."
+      ],
+      "queue_status": "pending"
+    },
+    "metadata": {
+      "agent_name": "Broadcast Scheduler Agent",
+      "timestamp": "2024-06-13T09:00:00Z"
+    }
+  },
+  "is_actual_tested": true,
+  "test_timestamp": "2026-02-06T08:30:05.117021",
+  "test_message_used": "Hello, provide a sample response",
+  "actual_test_response": {
+    "status": "error",
+    "result": {
+      "broadcast_id": null,
+      "broadcast_name": "Hammer Broadcast - Promo Template to Q1 Leads",
+      "template_id": "Promo Template",
+      "list_id": "Q1 Leads",
+      "schedule_type": "hammer",
+      "time_slots": [],
+      "total_contacts": 500,
+      "total_messages": 0,
+      "estimated_duration": "0 minutes",
+      "personalization_preview": [],
+      "validation_status": "invalid",
+      "validation_errors": [
+        "Scheduled times must be provided in ISO 8601 or HH:MM format with timezone.",
+        "Times must be in the future; please specify the timezone (default is UTC) to ensure accurate scheduling."
+      ],
+      "queue_status": "pending"
+    },
+    "metadata": {
+      "agent_name": "Broadcast Scheduler Agent",
+      "timestamp": "2024-06-13T09:00:00Z"
+    }
+  },
+  "test_passed": true
+}

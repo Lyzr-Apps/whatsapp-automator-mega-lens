@@ -1,0 +1,35 @@
+{
+  "agent_name": "Broadcast Scheduler Agent",
+  "agent_id": "6985a638705117394b711964",
+  "test_message": "Schedule a Hammer broadcast using template 'Promo Template' to contact list 'Q1 Leads' (500 contacts) at these times: 9:00 AM, 2:00 PM, and 6:00 PM today",
+  "expected_purpose": "Configures multi-time broadcasts with Hammer feature, validates schedules, queues messages",
+  "timestamp": "2026-02-06T08:30:05.116509",
+  "is_valid_json": true,
+  "validation_errors": [],
+  "actual_response": {
+    "status": "error",
+    "result": {
+      "broadcast_id": null,
+      "broadcast_name": "Hammer Broadcast - Promo Template to Q1 Leads",
+      "template_id": "Promo Template",
+      "list_id": "Q1 Leads",
+      "schedule_type": "hammer",
+      "time_slots": [],
+      "total_contacts": 500,
+      "total_messages": 0,
+      "estimated_duration": "0 minutes",
+      "personalization_preview": [],
+      "validation_status": "invalid",
+      "validation_errors": [
+        "Scheduled times must be provided in ISO 8601 or HH:MM format with timezone.",
+        "Times must be in the future; please specify the timezone (default is UTC) to ensure accurate scheduling."
+      ],
+      "queue_status": "pending"
+    },
+    "metadata": {
+      "agent_name": "Broadcast Scheduler Agent",
+      "timestamp": "2024-06-13T09:00:00Z"
+    }
+  },
+  "raw_response": "{\n  \"status\": \"error\",\n  \"result\": {\n    \"broadcast_id\": null,\n    \"broadcast_name\": \"Hammer Broadcast - Promo Template to Q1 Leads\",\n    \"template_id\": \"Promo Template\",\n    \"list_id\": \"Q1 Leads\",\n    \"schedule_type\": \"hammer\",\n    \"time_slots\": [],\n    \"total_contacts\": 500,\n    \"total_messages\": 0,\n    \"estimated_duration\": \"0 minutes\",\n    \"personalization_preview\": [],\n    \"validation_status\": \"invalid\",\n    \"validation_errors\": [\n      \"Scheduled times must be provided in ISO 8601 or HH:MM format with timezone.\",\n      \"Times must be in the future; please specify the timezone (default is UTC) to ensure accurate scheduling.\"\n    ],\n    \"queue_status\": \"pending\"\n  },\n  \"metadata\": {\n    \"agent_name\": \"Broadcast Scheduler Agent\",\n    \"timestamp\": \"2024-06-13T09:00:00Z\"\n  }\n}"
+}

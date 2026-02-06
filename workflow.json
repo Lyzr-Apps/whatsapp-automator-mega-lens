@@ -1,0 +1,42 @@
+{
+  "nodes": [
+    {
+      "id": "input_node",
+      "type": "Input",
+      "label": "User Input",
+      "nodeCategory": "input"
+    },
+    {
+      "id": "template_manager_agent",
+      "type": "Agent",
+      "label": "Template Manager Agent",
+      "nodeCategory": "agent"
+    },
+    {
+      "id": "contact_processor_agent",
+      "type": "Agent",
+      "label": "Contact Processor Agent",
+      "nodeCategory": "agent"
+    },
+    {
+      "id": "broadcast_scheduler_agent",
+      "type": "Agent",
+      "label": "Broadcast Scheduler Agent",
+      "nodeCategory": "agent"
+    }
+  ],
+  "edges": [
+    {
+      "source": "input_node",
+      "target": "template_manager_agent"
+    },
+    {
+      "source": "input_node",
+      "target": "contact_processor_agent"
+    },
+    {
+      "source": "input_node",
+      "target": "broadcast_scheduler_agent"
+    }
+  ]
+}

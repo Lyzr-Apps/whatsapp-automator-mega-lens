@@ -1,0 +1,33 @@
+{
+  "workflow_name": "WhatsApp Broadcast & Automation Hub",
+  "workflow_type": "independent_agents",
+  "created_at": "2026-02-06T00:00:00Z",
+  "agents": [
+    {
+      "agent_id": "6985a60a301c62c7ca2c7df8",
+      "agent_name": "Template Manager Agent",
+      "agent_type": "independent",
+      "node_id": "template_manager_agent",
+      "trigger": "Save Template on Templates Screen",
+      "response_schema": "response_schemas/template_manager_agent_response.json"
+    },
+    {
+      "agent_id": "6985a61fe2c0086a4fc43bf2",
+      "agent_name": "Contact Processor Agent",
+      "agent_type": "independent",
+      "node_id": "contact_processor_agent",
+      "trigger": "Upload & Process on Contacts Screen",
+      "response_schema": "response_schemas/contact_processor_agent_response.json"
+    },
+    {
+      "agent_id": "6985a638705117394b711964",
+      "agent_name": "Broadcast Scheduler Agent",
+      "agent_type": "independent",
+      "node_id": "broadcast_scheduler_agent",
+      "trigger": "Schedule Broadcast / Hammer Send on Broadcast Screen",
+      "response_schema": "response_schemas/broadcast_scheduler_agent_response.json"
+    }
+  ],
+  "total_agents": 3,
+  "integration_notes": "WhatsApp Business API integration required for Broadcast Scheduler Agent (custom integration - user must configure credentials)"
+}
